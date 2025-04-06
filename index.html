@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>خبرخوان سلبریتی‌ها</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>📢 تازه‌ترین اخبار سلبریتی‌ها</h1>
+    <div id="news-feed">در حال بارگذاری اخبار...</div>
+  </div>
+
+  <script>
+    const rssFeeds = [
+      "https://www.etonline.com/news/rss", 
+      "https://www.hollywoodreporter.com/t/rss.xml",
+      "https://feeds.bbci.co.uk/persian/entertainment/rss.xml"
+    ];
+
+    async function fetchRSS(url) {
+      const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
+      const data = await res.json();
+      return data.items || [];
+    }
+
+    async function loadNews() {
+      const container = document.getElementById("news-feed");
+      container.innerHTML = "";
+      let allItems = [];
+
+      for (const url of rssFeeds) {
+        const items = await fetchRSS(url);
+        allItems = allItems.concat(items);
+      }
+
+      allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+      allItems.slice(0, 10).forEach(item => {
+        const el = document.createElement("div");
+        el.className = "news-item";
+        el.innerHTML = `
+          <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
+          <p>${item.description.substring(0, 150)}...</p>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    loadNews();
+  </script>
+
+  <style>
+    body {
+      font-family: Tahoma, sans-serif;
+      background: #f4f4f4;
+      direction: rtl;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .news-item {
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+    }
+    .news-item h3 {
+      font-size: 18px;
+      margin: 0 0 5px;
+    }
+    .news-item a {
+      color: #0078ff;
+      text-decoration: none;
+    }
+    .news-item a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</body>
+</html>
