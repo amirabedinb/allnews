@@ -2,14 +2,23 @@
 <html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/shabnam-font@v5.0.1/dist/font-face.css" rel="stylesheet" type="text/css" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>خبرخوان سلبریتی‌ها</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>خبرخوان سلبریتی‌ها و سیاست</title>
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/shabnam-font@v5.0.1/dist/font-face.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
   <div class="container">
-    <h1>📢 تازه‌ترین اخبار سلبریتی‌ها</h1>
+    <h1>📢 تازه‌ترین اخبار سلبریتی‌ها و سیاست</h1>
+
+    <div class="filters">
+      <button onclick="filterNews('all')">همه</button>
+      <button onclick="filterNews('کلونی')">جورج کلونی</button>
+      <button onclick="filterNews('فیلم')">🎬 فیلم و سینما</button>
+      <button onclick="filterNews('مد')">👗 مد و لباس</button>
+      <button onclick="filterNews('موزیک')">🎵 موزیک</button>
+      <button onclick="filterNews('سیاست')">🗳️ اخبار سیاسی</button>
+    </div>
+
     <div id="news-feed">در حال بارگذاری اخبار...</div>
   </div>
 
@@ -17,13 +26,24 @@
     const rssFeeds = [
       "https://www.etonline.com/news/rss", 
       "https://www.hollywoodreporter.com/t/rss.xml",
-      "https://feeds.bbci.co.uk/persian/entertainment/rss.xml"
+      "https://feeds.bbci.co.uk/persian/entertainment/rss.xml",
+      "https://feeds.bbci.co.uk/persian/world/rss.xml"
     ];
 
     async function fetchRSS(url) {
       const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
       const data = await res.json();
       return data.items || [];
+    }
+
+    async function translateText(text) {
+      try {
+        const res = await fetch("https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) + "&langpair=en|fa");
+        const data = await res.json();
+        return data.responseData.translatedText;
+      } catch (e) {
+        return text;
+      }
     }
 
     async function loadNews() {
@@ -38,14 +58,30 @@
 
       allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
-      allItems.slice(0, 10).forEach(item => {
+      for (const item of allItems.slice(0, 15)) {
         const el = document.createElement("div");
         el.className = "news-item";
+
+        const translatedTitle = await translateText(item.title);
+        const translatedDesc = await translateText(item.description.substring(0, 150));
+
         el.innerHTML = `
-          <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
-          <p>${item.description.substring(0, 150)}...</p>
+          <h3><a href="${item.link}" target="_blank">${translatedTitle}</a></h3>
+          <p>${translatedDesc}...</p>
         `;
         container.appendChild(el);
+      }
+    }
+
+    function filterNews(keyword) {
+      const allItems = document.querySelectorAll('.news-item');
+      allItems.forEach(item => {
+        const text = item.textContent;
+        if (keyword === 'all' || text.includes(keyword)) {
+          item.style.display = 'block';
+        } else {
+          item.style.display = 'none';
+        }
       });
     }
 
@@ -53,7 +89,7 @@
   </script>
 
   <style>
-        body {
+    body {
       font-family: 'Shabnam', Tahoma, sans-serif;
       background: #f4f4f4;
       direction: rtl;
@@ -66,6 +102,23 @@
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .filters {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .filters button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #0078ff;
+      color: white;
+    }
+    .filters button:hover {
+      background-color: #005dc1;
     }
     .news-item {
       border-bottom: 1px solid #ddd;
