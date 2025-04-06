@@ -12,23 +12,26 @@
 
     <div class="filters">
       <button onclick="filterNews('all')">همه</button>
-      <button onclick="filterNews('کلونی')">جورج کلونی</button>
-      <button onclick="filterNews('فیلم')">🎬 فیلم و سینما</button>
-      <button onclick="filterNews('مد')">👗 مد و لباس</button>
-      <button onclick="filterNews('موزیک')">🎵 موزیک</button>
-      <button onclick="filterNews('سیاست')">🗳️ اخبار سیاسی</button>
+      <button onclick="filterNews('etonline')">ETOnline</button>
+      <button onclick="filterNews('hollywoodreporter')">Hollywood Reporter</button>
+      <button onclick="filterNews('independentpersian')">ایندیپندنت فارسی</button>
+      <button onclick="filterNews('alarabiya')">العربیه فارسی</button>
+      <button onclick="filterNews('timesofisrael')">تایمز اسرائیل</button>
+      <button onclick="filterNews('radis')">رادیو دیدگاه</button>
     </div>
 
     <div id="news-feed">در حال بارگذاری اخبار...</div>
   </div>
 
   <script>
-    const rssFeeds = [
-      "https://www.etonline.com/news/rss", 
-      "https://www.hollywoodreporter.com/t/rss.xml",
-      "https://feeds.bbci.co.uk/persian/entertainment/rss.xml",
-      "https://feeds.bbci.co.uk/persian/world/rss.xml"
-    ];
+    const rssSources = {
+      etonline: "https://www.etonline.com/news/rss",
+      hollywoodreporter: "https://www.hollywoodreporter.com/t/rss.xml",
+      independentpersian: "https://www.independentpersian.com/rss",
+      alarabiya: "https://farsi.alarabiya.net/.mrss",
+      timesofisrael: "https://fa.timesofisrael.com/feed/",
+      radis: "https://radis.org/feed/"
+    };
 
     async function fetchRSS(url) {
       const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
@@ -46,19 +49,22 @@
       }
     }
 
-    async function loadNews() {
+    async function loadNews(source = 'all') {
       const container = document.getElementById("news-feed");
-      container.innerHTML = "";
+      container.innerHTML = "در حال بارگذاری...";
       let allItems = [];
 
-      for (const url of rssFeeds) {
+      const sources = source === 'all' ? Object.values(rssSources) : [rssSources[source]];
+
+      for (const url of sources) {
         const items = await fetchRSS(url);
-        allItems = allItems.concat(items);
+        allItems = allItems.concat(items.map(item => ({ ...item, source })));
       }
 
       allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
-      for (const item of allItems.slice(0, 15)) {
+      container.innerHTML = "";
+      for (const item of allItems.slice(0, 20)) {
         const el = document.createElement("div");
         el.className = "news-item";
 
@@ -68,21 +74,14 @@
         el.innerHTML = `
           <h3><a href="${item.link}" target="_blank">${translatedTitle}</a></h3>
           <p>${translatedDesc}...</p>
+          <small>منبع: ${item.source}</small>
         `;
         container.appendChild(el);
       }
     }
 
-    function filterNews(keyword) {
-      const allItems = document.querySelectorAll('.news-item');
-      allItems.forEach(item => {
-        const text = item.textContent;
-        if (keyword === 'all' || text.includes(keyword)) {
-          item.style.display = 'block';
-        } else {
-          item.style.display = 'none';
-        }
-      });
+    function filterNews(source) {
+      loadNews(source);
     }
 
     loadNews();
@@ -135,6 +134,11 @@
     }
     .news-item a:hover {
       text-decoration: underline;
+    }
+    .news-item small {
+      color: #777;
+      display: block;
+      margin-top: 5px;
     }
   </style>
 </body>
